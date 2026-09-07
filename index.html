@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Notre Année ❤️</title>
+  <!-- Librairie pour les confettis -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <style>
     :root {
       --bg: #fffaf7;
@@ -16,7 +18,49 @@
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     
-    body { background-color: var(--bg); color: var(--text); display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 24px 16px; }
+    body { background-color: var(--bg); color: var(--text); display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 24px 16px; overflow-x: hidden; }
+
+    /* --- ANIMATIONS --- */
+    @keyframes colorGlow {
+      0% { color: #e06d75; text-shadow: 0 0 5px rgba(224,109,117,0.5); }
+      50% { color: #ff8fa3; text-shadow: 0 0 15px rgba(255,143,163,0.8); }
+      100% { color: #e06d75; text-shadow: 0 0 5px rgba(224,109,117,0.5); }
+    }
+    @keyframes heartbeat {
+      0% { transform: scale(1); }
+      25% { transform: scale(1.1); }
+      50% { transform: scale(1); }
+      75% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+    @keyframes blink {
+      0%, 96%, 98%, 100% { transform: scaleY(1); }
+      97%, 99% { transform: scaleY(0.1); }
+    }
+
+    .animated-name { display: inline-block; animation: colorGlow 3s infinite; font-weight: bold; }
+
+    /* --- ÉLÉPHANT --- */
+    #elephant {
+      position: fixed; bottom: -60px; right: 20px; font-size: 50px; z-index: 500;
+      transition: bottom 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    #elephant.peek { bottom: 10px; }
+    #elephant span { display: inline-block; animation: blink 5s infinite; }
+
+    /* --- SCORE COEUR --- */
+    #score-bar {
+      position: fixed; top: 10px; right: 10px; background: white; padding: 8px 15px;
+      border-radius: 20px; box-shadow: var(--shadow); font-weight: bold; color: var(--accent);
+      display: none; z-index: 100;
+    }
+
+    /* --- GROS COEUR INTERACTIF --- */
+    .giant-heart-btn {
+      font-size: 4rem; background: none; border: none; cursor: pointer; user-select: none;
+      transition: transform 0.1s; margin: 20px 0; display: inline-block; animation: heartbeat 2s infinite;
+    }
+    .giant-heart-btn:active { transform: scale(1.5) !important; animation: none; }
 
     /* --- ÉCRAN DE CONNEXION --- */
     #login-screen {
@@ -24,51 +68,55 @@
       background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center;
       z-index: 1000; transition: opacity 0.5s ease;
     }
-    .login-box {
-      background: var(--card-bg); padding: 30px; border-radius: 20px; box-shadow: var(--shadow);
-      width: 90%; max-width: 350px; text-align: center;
-    }
+    .login-box { background: var(--card-bg); padding: 30px; border-radius: 20px; box-shadow: var(--shadow); width: 90%; max-width: 350px; text-align: center; }
     .login-box h2 { color: var(--accent); margin-bottom: 20px; }
     .input-group { margin-bottom: 15px; text-align: left; }
     .input-group label { display: block; font-size: 0.9rem; margin-bottom: 5px; color: var(--muted); }
     .input-group input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; }
-    .btn { background: var(--accent); color: white; border: none; padding: 12px 20px; width: 100%; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 10px; }
+    .btn { background: var(--accent); color: white; border: none; padding: 12px 20px; width: 100%; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 10px; transition: transform 0.2s; }
+    .btn:active { transform: scale(0.95); }
     .error-msg { color: red; font-size: 0.8rem; margin-top: 10px; display: none; }
 
-    /* --- LE SITE PRINCIPAL (CAMILLE) --- */
-    #camille-content { display: none; width: 100%; max-width: 420px; flex-direction: column; align-items: center; }
+    /* --- VUES PRINCIPALES --- */
+    #camille-content, #louis-content { display: none; width: 100%; max-width: 420px; flex-direction: column; align-items: center; padding-top: 40px; }
     header { text-align: center; margin-bottom: 20px; }
-    h1 { font-size: 1.6rem; color: var(--accent); margin-bottom: 6px; }
-    p.subtitle { font-size: 0.95rem; color: var(--muted); }
+    h1 { font-size: 1.6rem; color: var(--text); margin-bottom: 6px; }
     
     .card {
       background: var(--card-bg); width: 100%; border-radius: 20px; box-shadow: var(--shadow);
-      overflow: hidden; display: flex; flex-direction: column; align-items: center; padding: 16px; text-align: center;
+      overflow: hidden; display: flex; flex-direction: column; align-items: center; padding: 20px; text-align: center;
     }
-    .image-container { width: 100%; height: 380px; background: #f0f0f0; border-radius: 14px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
-    .image-container img { width: 100%; height: 100%; object-fit: cover; }
-    .caption { margin-top: 18px; font-size: 1.05rem; line-height: 1.4; color: var(--text); font-weight: 500; }
-    .date-badge { margin-top: 12px; font-size: 0.8rem; color: var(--accent); background: rgba(224, 109, 117, 0.12); padding: 4px 10px; border-radius: 12px; font-weight: 600; }
-
-    /* --- LE SITE ADMIN (LOUIS) --- */
-    #louis-content { display: none; width: 100%; max-width: 500px; flex-direction: column; }
-    .admin-header { text-align: center; margin-bottom: 20px; color: var(--admin-accent); }
-    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px; }
-    .stat-box { background: var(--card-bg); padding: 15px; border-radius: 15px; text-align: center; box-shadow: var(--shadow); }
-    .stat-box h3 { font-size: 2rem; color: var(--admin-accent); }
-    .stat-box p { font-size: 0.85rem; color: var(--muted); margin-top: 5px; }
     
-    .admin-list { background: var(--card-bg); border-radius: 15px; padding: 15px; box-shadow: var(--shadow); }
-    .admin-list h4 { margin-bottom: 15px; color: var(--text); border-bottom: 1px solid #eee; padding-bottom: 10px; }
-    .photo-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f5f5f5; font-size: 0.9rem; }
-    .photo-item:last-child { border-bottom: none; }
-    .status-past { color: #888; }
-    .status-today { color: var(--admin-accent); font-weight: bold; }
-    .status-future { color: #e06d75; }
+    #media-box { width: 100%; height: 380px; background: #f0f0f0; border-radius: 14px; overflow: hidden; display: none; align-items: center; justify-content: center; }
+    #media-box img { width: 100%; height: 100%; object-fit: cover; }
+    
+    #quiz-box { width: 100%; display: flex; flex-direction: column; align-items: center; }
+    #question-text { font-size: 1.2rem; margin-bottom: 15px; font-weight: bold; color: var(--text); }
+    #quiz-feedback { margin-top: 10px; font-weight: bold; font-size: 0.9rem; min-height: 20px; }
+    .feedback-good { color: #4CAF50; }
+    .feedback-bad { color: #f44336; }
 
+    .caption { margin-top: 18px; font-size: 1.05rem; line-height: 1.4; color: var(--text); font-weight: 500; display: none; }
+
+    /* --- ADMIN --- */
+    .admin-header { color: var(--admin-accent); }
+    .stat-box { background: var(--card-bg); padding: 15px; border-radius: 15px; text-align: center; box-shadow: var(--shadow); width: 100%; margin-bottom: 10px; }
+
+    /* --- VUE WILIAM (FAKE ERREURS) --- */
+    #wiliam-content {
+      display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: black; color: #ff3333; font-family: 'Courier New', Courier, monospace;
+      font-size: 14px; padding: 10px; overflow-y: hidden; z-index: 9999; text-align: left;
+    }
   </style>
 </head>
 <body>
+
+  <!-- SCORE EN HAUT À DROITE -->
+  <div id="score-bar">❤️ <span id="heart-count">300</span></div>
+
+  <!-- ÉLÉPHANT ANIMÉ -->
+  <div id="elephant"><span>🐘</span></div>
 
   <!-- ÉCRAN DE CONNEXION -->
   <div id="login-screen">
@@ -90,159 +138,232 @@
   <!-- VUE CAMILLE (LE CADEAU) -->
   <div id="camille-content">
     <header>
-      <h1>Notre Année ❤️</h1>
-      <p class="subtitle">Un nouveau souvenir chaque jour</p>
+      <h1>Pour <span class="animated-name">Camille</span> ❤️</h1>
+      <p style="color: var(--muted); font-size: 0.9rem;">Résous l'énigme pour débloquer ton souvenir</p>
     </header>
+
+    <!-- BOUTON COEUR EXPLOSIF -->
+    <button class="giant-heart-btn" id="giant-heart" onmousedown="growHeart()" onmouseup="explodeHeart()" ontouchstart="growHeart()" ontouchend="explodeHeart()">💖</button>
+
     <div class="card">
-      <div class="image-container" id="media-box"></div>
-      <div class="caption" id="caption-text">Chargement...</div>
-      <div class="date-badge" id="date-badge"></div>
+      <!-- Zone Quiz -->
+      <div id="quiz-box">
+        <div id="question-text">Chargement...</div>
+        <div class="input-group" style="width: 100%;">
+          <input type="text" id="answer-input" placeholder="Ta réponse...">
+        </div>
+        <button class="btn" onclick="checkAnswer()">Valider</button>
+        <div id="quiz-feedback"></div>
+      </div>
+
+      <!-- Zone Image -->
+      <div id="media-box"></div>
+      <div class="caption" id="caption-text"></div>
     </div>
   </div>
 
   <!-- VUE LOUIS (ADMIN) -->
   <div id="louis-content">
     <h2 class="admin-header">⚙️ Panel Admin - Louis</h2>
-    
-    <div class="stats-grid">
-      <div class="stat-box">
-        <h3 id="stat-total">0</h3>
-        <p>Photos configurées</p>
-      </div>
-      <div class="stat-box">
-        <h3 id="stat-remaining">0</h3>
-        <p>Photos en réserve</p>
-      </div>
-    </div>
-
-    <div class="admin-list">
-      <h4>Planning des publications</h4>
-      <div id="admin-photo-list"></div>
+    <div class="stat-box">
+      <h3>Gérer les cœurs de test</h3>
+      <p>Score actuel (sur ce téléphone) : <strong id="admin-score-display">0</strong></p>
+      <button class="btn" style="background:#4a90e2; margin-top:10px;" onclick="addAdminScore(100)">+ 100 Cœurs</button>
+      <button class="btn" style="background:#e06d75; margin-top:10px;" onclick="resetAdminScore()">Réinitialiser à 300</button>
     </div>
   </div>
 
+  <!-- VUE WILIAM (BLAGUE) -->
+  <div id="wiliam-content"></div>
+
   <script>
-    /* =========================================================
-       BASE DE DONNÉES DES PHOTOS
-       J'ai pré-rempli tes 17 photos à partir du 16 septembre !
-       ========================================================= */
     const souvenirs = [
-      { date: "2026-09-16", photo: "photos/souvenir1.jpg", texte: "Le tout premier jour ! ❤️" },
-      { date: "2026-09-17", photo: "photos/souvenir2.jpg", texte: "Souvenir 2..." },
-      { date: "2026-09-18", photo: "photos/souvenir3.jpg", texte: "Souvenir 3..." },
-      { date: "2026-09-19", photo: "photos/souvenir4.jpg", texte: "Souvenir 4..." },
-      { date: "2026-09-20", photo: "photos/souvenir5.jpg", texte: "Souvenir 5..." },
-      { date: "2026-09-21", photo: "photos/souvenir6.jpg", texte: "Souvenir 6..." },
-      { date: "2026-09-22", photo: "photos/souvenir7.jpg", texte: "Souvenir 7..." },
-      { date: "2026-09-23", photo: "photos/souvenir8.jpg", texte: "Souvenir 8..." },
-      { date: "2026-09-24", photo: "photos/souvenir9.jpg", texte: "Souvenir 9..." },
-      { date: "2026-09-25", photo: "photos/souvenir10.jpg", texte: "Souvenir 10..." },
-      { date: "2026-09-26", photo: "photos/souvenir11.jpg", texte: "Souvenir 11..." },
-      { date: "2026-09-27", photo: "photos/souvenir12.jpg", texte: "Souvenir 12..." },
-      { date: "2026-09-28", photo: "photos/souvenir13.jpg", texte: "Souvenir 13..." },
-      { date: "2026-09-29", photo: "photos/souvenir14.jpg", texte: "Souvenir 14..." },
-      { date: "2026-09-30", photo: "photos/souvenir15.jpg", texte: "Souvenir 15..." },
-      { date: "2026-10-01", photo: "photos/souvenir16.jpg", texte: "Souvenir 16..." },
-      { date: "2026-10-02", photo: "photos/souvenir17.jpg", texte: "Souvenir 17..." }
+      { id: 1, date: "2026-09-16", photo: "photos/souvenir1.jpg", texte: "Le tout premier jour ! ❤️", question: "Ma couleur préférée ?", reponse: "rouge" },
+      { id: 2, date: "2026-09-17", photo: "photos/souvenir2.jpg", texte: "Souvenir 2", question: "Mon animal totem ?", reponse: "ours brun" },
+      { id: 3, date: "2026-09-18", photo: "photos/souvenir3.jpg", texte: "Souvenir 3", question: "Mon premier club de foot ?", reponse: "Gosselies" },
+      { id: 4, date: "2026-09-19", photo: "photos/souvenir4.jpg", texte: "Souvenir 4", question: "La marque de ma montre ?", reponse: "Samsung" },
+      { id: 5, date: "2026-09-20", photo: "photos/souvenir5.jpg", texte: "Souvenir 5", question: "Mon numéro porte bonheur ?", reponse: "4" },
+      { id: 6, date: "2026-09-21", photo: "photos/souvenir6.jpg", texte: "Souvenir 6", question: "Mon pseudo dans le jeu vidéo Minecraft et sur Discord ?", reponse: "Catalane1999" },
+      { id: 7, date: "2026-09-22", photo: "photos/souvenir7.jpg", texte: "Souvenir 7", question: "Mon IA préférée ?", reponse: "Gemini" },
+      { id: 8, date: "2026-09-23", photo: "photos/souvenir8.jpg", texte: "Souvenir 8", question: "Mon meilleur ami en première maternelle ?", reponse: "Romain" },
+      { id: 9, date: "2026-09-24", photo: "photos/souvenir9.jpg", texte: "Souvenir 9", question: "Le nom de mon prof de Géo ?", reponse: "Mr Laeremans" },
+      { id: 10, date: "2026-09-25", photo: "photos/souvenir10.jpg", texte: "Souvenir 10", question: "L'endroit où je veux aller avec toi ?", reponse: "[A REMPLACER]" },
+      { id: 11, date: "2026-09-26", photo: "photos/souvenir11.jpg", texte: "Souvenir 11", question: "Ma plus grande fierté ?", reponse: "Toi" },
+      { id: 12, date: "2026-09-27", photo: "photos/souvenir12.jpg", texte: "Souvenir 12", question: "Mon surnom préféré ?", reponse: "esclave de noel" },
+      { id: 13, date: "2026-09-28", photo: "photos/souvenir13.jpg", texte: "Souvenir 13", question: "Mon plat préféré ?", reponse: "pates bolo" },
+      { id: 14, date: "2026-09-29", photo: "photos/souvenir14.jpg", texte: "Souvenir 14", question: "Ma boisson préférée ?", reponse: "Coca cherry" },
+      { id: 15, date: "2026-09-30", photo: "photos/souvenir15.jpg", texte: "Souvenir 15", question: "Le prénom de mon grand-père paternel ?", reponse: "Albert" },
+      { id: 16, date: "2026-10-01", photo: "photos/souvenir16.jpg", texte: "Souvenir 16", question: "Le pays où vit mon parrain ?", reponse: "Canada" },
+      { id: 17, date: "2026-10-02", photo: "photos/souvenir17.jpg", texte: "Souvenir 17", question: "Mon joueur de foot idole ?", reponse: "Thibaut Courtois" }
     ];
+
+    let currentScore = parseInt(localStorage.getItem('coeurs')) || 300;
+    let unlockedDays = JSON.parse(localStorage.getItem('unlockedDays')) || [];
+    let todaySouvenir = null;
+
+    function updateScoreDisplay() {
+      localStorage.setItem('coeurs', currentScore);
+      document.getElementById('heart-count').textContent = currentScore;
+      document.getElementById('admin-score-display').textContent = currentScore;
+    }
 
     function getTodayString() {
       const now = new Date();
-      const year = now.getFullYear();
-      const month = String(now.getMonth() + 1).padStart(2, '0');
-      const day = String(now.getDate()).padStart(2, '0');
-      return `${year}-${month}-${day}`;
+      return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     }
 
-    // GESTION DE LA CONNEXION (Double Profil)
+    function cleanString(str) {
+      return str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
+    }
+
     function checkLogin() {
       const id = document.getElementById('userid').value.trim().toLowerCase();
       const pw = document.getElementById('userpw').value.trim();
-      
       const loginScreen = document.getElementById('login-screen');
 
+      // 1. CAMILLE
       if (id === 'camille' && pw.toLowerCase() === 'spot') {
         loginScreen.style.opacity = '0';
         setTimeout(() => {
           loginScreen.style.display = 'none';
           document.getElementById('camille-content').style.display = 'flex';
+          document.getElementById('score-bar').style.display = 'block';
+          updateScoreDisplay();
           initCamille();
+          randomElephant();
         }, 500);
       } 
+      // 2. LOUIS (ADMIN)
       else if (id === 'louis' && pw === 'Laylo#2') {
         loginScreen.style.opacity = '0';
         setTimeout(() => {
           loginScreen.style.display = 'none';
           document.getElementById('louis-content').style.display = 'flex';
-          initLouis();
+          updateScoreDisplay();
         }, 500);
-      } 
+      }
+      // 3. WILIAM (BLAGUE)
+      else if (id === 'wiliam' && pw.toLowerCase() === 'daube') {
+        loginScreen.style.opacity = '0';
+        setTimeout(() => {
+          loginScreen.style.display = 'none';
+          document.getElementById('wiliam-content').style.display = 'block';
+          startWiliamPrank();
+        }, 500);
+      }
       else {
         document.getElementById('error-msg').style.display = 'block';
       }
     }
 
-    // INITIALISATION VUE CAMILLE
+    // --- LE PIRATAGE DE WILIAM ---
+    function startWiliamPrank() {
+      const container = document.getElementById('wiliam-content');
+      const fakeErrors = [
+        "CRITICAL ERROR: SYSTEM FAILURE",
+        "FATAL EXCEPTION 0x00000008",
+        "UNAUTHORIZED ACCESS DETECTED",
+        "DATA CORRUPTION IN SECTOR 4",
+        "Wiliam.exe a cessé de fonctionner",
+        "SUPPRESSION DU DOSSIER SYSTEM32...",
+        "DAUBE_OVERLOAD_ERROR",
+        "ALERT: INTRUSION DETECTED",
+        "ACCESS DENIED. LOCKING FILES...",
+        "ERREUR: TROP DE DAUBE DANS LA MEMOIRE"
+      ];
+
+      setInterval(() => {
+        const msg = document.createElement('div');
+        msg.textContent = `[${new Date().toISOString()}] ${fakeErrors[Math.floor(Math.random() * fakeErrors.length)]}`;
+        container.appendChild(msg);
+        container.scrollTop = container.scrollHeight;
+      }, 50); // Balance une erreur toutes les 50 millisecondes !
+    }
+
     function initCamille() {
       const today = getTodayString();
-      const mediaBox = document.getElementById('media-box');
-      const captionText = document.getElementById('caption-text');
-      const dateBadge = document.getElementById('date-badge');
+      todaySouvenir = souvenirs.find(s => s.date === today);
 
-      const todaySouvenir = souvenirs.find(s => s.date === today);
+      if (!todaySouvenir) {
+        document.getElementById('quiz-box').innerHTML = `<div style="padding:40px; color:#888; font-size:3rem;">🔒</div><div style="margin-top:10px;">Reviens le jour J !</div>`;
+        return;
+      }
 
-      if (todaySouvenir) {
-        mediaBox.innerHTML = `<img src="${todaySouvenir.photo}" alt="Souvenir">`;
-        captionText.textContent = todaySouvenir.texte;
-        dateBadge.textContent = "Aujourd'hui ✨";
+      if (unlockedDays.includes(todaySouvenir.id)) {
+        showPhoto();
       } else {
-        mediaBox.innerHTML = `<div style="padding:40px; color:#888; font-size:3rem;">🔒</div>`;
-        captionText.textContent = "Reviens demain ou le jour J pour la prochaine surprise !";
-        dateBadge.textContent = "Patience...";
+        document.getElementById('question-text').textContent = todaySouvenir.question;
       }
     }
 
-    // INITIALISATION VUE ADMIN (LOUIS)
-    function initLouis() {
-      const today = getTodayString();
+    function checkAnswer() {
+      const inputVal = document.getElementById('answer-input').value;
+      const feedback = document.getElementById('quiz-feedback');
       
-      // Calcul des statistiques
-      const total = souvenirs.length;
-      const remaining = souvenirs.filter(s => s.date > today).length;
+      const userClean = cleanString(inputVal);
+      const expectedClean = cleanString(todaySouvenir.reponse);
+
+      if (todaySouvenir.id === 12 && userClean === cleanString("Louny")) {
+        currentScore -= 300;
+        updateScoreDisplay();
+        feedback.className = "feedback-bad";
+        feedback.textContent = "Aïe... -300 cœurs pour avoir dit le mot interdit 💔 !";
+        return;
+      }
+
+      if (userClean === expectedClean) {
+        currentScore += 75;
+        updateScoreDisplay();
+        unlockedDays.push(todaySouvenir.id);
+        localStorage.setItem('unlockedDays', JSON.stringify(unlockedDays));
+        
+        confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+        showPhoto();
+      } else {
+        currentScore -= 50;
+        updateScoreDisplay();
+        feedback.className = "feedback-bad";
+        feedback.textContent = "Oops, mauvaise réponse ! -50 cœurs 💔 Réessaie !";
+      }
+    }
+
+    function showPhoto() {
+      document.getElementById('quiz-box').style.display = 'none';
+      const mediaBox = document.getElementById('media-box');
+      const captionText = document.getElementById('caption-text');
       
-      document.getElementById('stat-total').textContent = total;
-      document.getElementById('stat-remaining').textContent = remaining;
+      mediaBox.style.display = 'flex';
+      captionText.style.display = 'block';
+      
+      mediaBox.innerHTML = `<img src="${todaySouvenir.photo}" alt="Souvenir">`;
+      captionText.innerHTML = `${todaySouvenir.texte}<br><br><span style="color:var(--accent); font-size:0.8rem;">(Réponse : ${todaySouvenir.reponse})</span>`;
+    }
 
-      // Génération de la liste
-      const listContainer = document.getElementById('admin-photo-list');
-      listContainer.innerHTML = '';
-
-      souvenirs.forEach(s => {
-        let statusClass = '';
-        let statusText = '';
-
-        if (s.date < today) {
-          statusClass = 'status-past';
-          statusText = '✓ Passée';
-        } else if (s.date === today) {
-          statusClass = 'status-today';
-          statusText = '★ En cours';
-        } else {
-          statusClass = 'status-future';
-          statusText = '⏳ En attente';
+    function randomElephant() {
+      setInterval(() => {
+        const el = document.getElementById('elephant');
+        if (Math.random() > 0.7) {
+          el.classList.add('peek');
+          setTimeout(() => el.classList.remove('peek'), 4000);
         }
+      }, 10000);
+    }
 
-        // Reformater la date pour l'affichage (ex: 2026-09-16 -> 16/09/2026)
-        const dateParts = s.date.split('-');
-        const dateDisplay = `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
+    function growHeart() {}
+    function explodeHeart() {
+      confetti({ particleCount: 80, spread: 100, startVelocity: 30, colors: ['#ff8fa3', '#e06d75', '#ffffff'], origin: { y: 0.3 } });
+    }
 
-        listContainer.innerHTML += `
-          <div class="photo-item">
-            <span><strong>${dateDisplay}</strong> - ${s.photo.replace('photos/', '')}</span>
-            <span class="${statusClass}">${statusText}</span>
-          </div>
-        `;
-      });
+    function addAdminScore(amount) {
+      currentScore += amount;
+      updateScoreDisplay();
+    }
+    function resetAdminScore() {
+      currentScore = 300;
+      updateScoreDisplay();
+      localStorage.removeItem('unlockedDays');
+      unlockedDays = [];
+      alert("Score réinitialisé à 300, et photos verrouillées (utile pour tester !)");
     }
   </script>
 </body>
