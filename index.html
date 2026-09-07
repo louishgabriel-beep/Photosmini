@@ -3,19 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pour Camille ❤️</title>
+  <title>Notre Année ❤️</title>
   <style>
     :root {
       --bg: #fffaf7;
       --card-bg: #ffffff;
       --accent: #e06d75;
+      --admin-accent: #4a90e2;
       --text: #333333;
       --muted: #888888;
       --shadow: 0 10px 25px rgba(0, 0, 0, 0.07);
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     
-    body { background-color: var(--bg); color: var(--text); display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 24px 16px; overflow-x: hidden; }
+    body { background-color: var(--bg); color: var(--text); display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 24px 16px; }
 
     /* --- ÉCRAN DE CONNEXION --- */
     #login-screen {
@@ -30,18 +31,12 @@
     .login-box h2 { color: var(--accent); margin-bottom: 20px; }
     .input-group { margin-bottom: 15px; text-align: left; }
     .input-group label { display: block; font-size: 0.9rem; margin-bottom: 5px; color: var(--muted); }
-    .input-group input {
-      width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem;
-    }
-    .btn {
-      background: var(--accent); color: white; border: none; padding: 12px 20px;
-      width: 100%; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 10px;
-    }
+    .input-group input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; }
+    .btn { background: var(--accent); color: white; border: none; padding: 12px 20px; width: 100%; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 10px; }
     .error-msg { color: red; font-size: 0.8rem; margin-top: 10px; display: none; }
 
-    /* --- LE SITE PRINCIPAL --- */
-    #main-content { display: none; width: 100%; max-width: 420px; flex-direction: column; align-items: center; }
-    
+    /* --- LE SITE PRINCIPAL (CAMILLE) --- */
+    #camille-content { display: none; width: 100%; max-width: 420px; flex-direction: column; align-items: center; }
     header { text-align: center; margin-bottom: 20px; }
     h1 { font-size: 1.6rem; color: var(--accent); margin-bottom: 6px; }
     p.subtitle { font-size: 0.95rem; color: var(--muted); }
@@ -52,24 +47,24 @@
     }
     .image-container { width: 100%; height: 380px; background: #f0f0f0; border-radius: 14px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
     .image-container img { width: 100%; height: 100%; object-fit: cover; }
-    
     .caption { margin-top: 18px; font-size: 1.05rem; line-height: 1.4; color: var(--text); font-weight: 500; }
     .date-badge { margin-top: 12px; font-size: 0.8rem; color: var(--accent); background: rgba(224, 109, 117, 0.12); padding: 4px 10px; border-radius: 12px; font-weight: 600; }
+
+    /* --- LE SITE ADMIN (LOUIS) --- */
+    #louis-content { display: none; width: 100%; max-width: 500px; flex-direction: column; }
+    .admin-header { text-align: center; margin-bottom: 20px; color: var(--admin-accent); }
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px; }
+    .stat-box { background: var(--card-bg); padding: 15px; border-radius: 15px; text-align: center; box-shadow: var(--shadow); }
+    .stat-box h3 { font-size: 2rem; color: var(--admin-accent); }
+    .stat-box p { font-size: 0.85rem; color: var(--muted); margin-top: 5px; }
     
-    /* --- BOUTONS CUSTOM --- */
-    .custom-buttons { display: flex; gap: 15px; margin-top: 25px; width: 100%; justify-content: center; }
-    .cute-btn {
-      background: white; border: 2px solid var(--accent); color: var(--accent); padding: 10px 15px;
-      border-radius: 20px; font-weight: bold; cursor: pointer; transition: all 0.3s; position: relative; overflow: hidden;
-    }
-    .cute-btn span { display: inline-block; transition: transform 0.3s ease; }
-    .cute-btn .hidden-text {
-      position: absolute; top: 50%; left: 50%; transform: translate(-50%, 150%);
-      width: 100%; text-align: center; color: white; transition: transform 0.3s ease;
-    }
-    .cute-btn.active { background: var(--accent); color: white; }
-    .cute-btn.active span.default-text { transform: translateY(-150%); }
-    .cute-btn.active .hidden-text { transform: translate(-50%, -50%); }
+    .admin-list { background: var(--card-bg); border-radius: 15px; padding: 15px; box-shadow: var(--shadow); }
+    .admin-list h4 { margin-bottom: 15px; color: var(--text); border-bottom: 1px solid #eee; padding-bottom: 10px; }
+    .photo-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f5f5f5; font-size: 0.9rem; }
+    .photo-item:last-child { border-bottom: none; }
+    .status-past { color: #888; }
+    .status-today { color: var(--admin-accent); font-weight: bold; }
+    .status-future { color: #e06d75; }
 
   </style>
 </head>
@@ -78,7 +73,7 @@
   <!-- ÉCRAN DE CONNEXION -->
   <div id="login-screen">
     <div class="login-box">
-      <h2>Accès Réservé ❤️</h2>
+      <h2>Connexion</h2>
       <div class="input-group">
         <label>Identifiant</label>
         <input type="text" id="userid" placeholder="Qui es-tu ?">
@@ -92,79 +87,65 @@
     </div>
   </div>
 
-  <!-- CONTENU PRINCIPAL -->
-  <div id="main-content">
+  <!-- VUE CAMILLE (LE CADEAU) -->
+  <div id="camille-content">
     <header>
       <h1>Notre Année ❤️</h1>
       <p class="subtitle">Un nouveau souvenir chaque jour</p>
     </header>
-
     <div class="card">
       <div class="image-container" id="media-box"></div>
       <div class="caption" id="caption-text">Chargement...</div>
       <div class="date-badge" id="date-badge"></div>
     </div>
+  </div>
 
-    <div class="custom-buttons">
-      <button class="cute-btn" onclick="toggleCuteBtn(this)">
-        <span class="default-text">Mbb 💕</span>
-        <span class="hidden-text">Je t'aime !</span>
-      </button>
-      <button class="cute-btn" onclick="toggleCuteBtn(this)">
-        <span class="default-text">Ma Camille ✨</span>
-        <span class="hidden-text">Pour toujours</span>
-      </button>
+  <!-- VUE LOUIS (ADMIN) -->
+  <div id="louis-content">
+    <h2 class="admin-header">⚙️ Panel Admin - Louis</h2>
+    
+    <div class="stats-grid">
+      <div class="stat-box">
+        <h3 id="stat-total">0</h3>
+        <p>Photos configurées</p>
+      </div>
+      <div class="stat-box">
+        <h3 id="stat-remaining">0</h3>
+        <p>Photos en réserve</p>
+      </div>
+    </div>
+
+    <div class="admin-list">
+      <h4>Planning des publications</h4>
+      <div id="admin-photo-list"></div>
     </div>
   </div>
 
   <script>
     /* =========================================================
-       👇 LOUIS : C'EST ICI QUE TU AJOUTES TES PHOTOS ! 👇
-       
-       1. Ajoute tes photos dans le dossier "photos" sur GitHub.
-       2. Copie-colle un bloc entre les accolades { ... } ci-dessous 
-          pour chaque nouvelle journée.
-       3. Change la date, le nom du fichier et le texte.
+       BASE DE DONNÉES DES PHOTOS
+       J'ai pré-rempli tes 17 photos à partir du 16 septembre !
        ========================================================= */
-
     const souvenirs = [
-      {
-        date: "2026-09-07",
-        photo: "photos/souvenir1.jpg",
-        texte: "Le premier jour de notre aventure ! ❤️"
-      },
-      {
-        date: "2026-09-08",
-        photo: "photos/souvenir2.jpg",
-        texte: "Un nouveau jour, une nouvelle photo..."
-      }
-      // 👈 Ajoute les suivants ici au fur et à mesure !
+      { date: "2026-09-16", photo: "photos/souvenir1.jpg", texte: "Le tout premier jour ! ❤️" },
+      { date: "2026-09-17", photo: "photos/souvenir2.jpg", texte: "Souvenir 2..." },
+      { date: "2026-09-18", photo: "photos/souvenir3.jpg", texte: "Souvenir 3..." },
+      { date: "2026-09-19", photo: "photos/souvenir4.jpg", texte: "Souvenir 4..." },
+      { date: "2026-09-20", photo: "photos/souvenir5.jpg", texte: "Souvenir 5..." },
+      { date: "2026-09-21", photo: "photos/souvenir6.jpg", texte: "Souvenir 6..." },
+      { date: "2026-09-22", photo: "photos/souvenir7.jpg", texte: "Souvenir 7..." },
+      { date: "2026-09-23", photo: "photos/souvenir8.jpg", texte: "Souvenir 8..." },
+      { date: "2026-09-24", photo: "photos/souvenir9.jpg", texte: "Souvenir 9..." },
+      { date: "2026-09-25", photo: "photos/souvenir10.jpg", texte: "Souvenir 10..." },
+      { date: "2026-09-26", photo: "photos/souvenir11.jpg", texte: "Souvenir 11..." },
+      { date: "2026-09-27", photo: "photos/souvenir12.jpg", texte: "Souvenir 12..." },
+      { date: "2026-09-28", photo: "photos/souvenir13.jpg", texte: "Souvenir 13..." },
+      { date: "2026-09-29", photo: "photos/souvenir14.jpg", texte: "Souvenir 14..." },
+      { date: "2026-09-30", photo: "photos/souvenir15.jpg", texte: "Souvenir 15..." },
+      { date: "2026-10-01", photo: "photos/souvenir16.jpg", texte: "Souvenir 16..." },
+      { date: "2026-10-02", photo: "photos/souvenir17.jpg", texte: "Souvenir 17..." }
     ];
 
-    /* =========================================================
-       👆 FIN DE TA ZONE DE MODIFICATION 👆
-       Ne touche pas au code ci-dessous sauf si tu sais ce que tu fais 😉
-       ========================================================= */
-
-    // Gestion de la connexion
-    function checkLogin() {
-      const id = document.getElementById('userid').value.trim();
-      const pw = document.getElementById('userpw').value.trim();
-      
-      // Vérification (Attention aux majuscules/minuscules)
-      if (id.toLowerCase() === 'camille' && pw.toLowerCase() === 'spot') {
-        document.getElementById('login-screen').style.opacity = '0';
-        setTimeout(() => {
-          document.getElementById('login-screen').style.display = 'none';
-          document.getElementById('main-content').style.display = 'flex';
-          initSite(); // Charge la photo seulement si connectée
-        }, 500);
-      } else {
-        document.getElementById('error-msg').style.display = 'block';
-      }
-    }
-
-    // Gestion de la photo du jour
     function getTodayString() {
       const now = new Date();
       const year = now.getFullYear();
@@ -173,7 +154,36 @@
       return `${year}-${month}-${day}`;
     }
 
-    function initSite() {
+    // GESTION DE LA CONNEXION (Double Profil)
+    function checkLogin() {
+      const id = document.getElementById('userid').value.trim().toLowerCase();
+      const pw = document.getElementById('userpw').value.trim();
+      
+      const loginScreen = document.getElementById('login-screen');
+
+      if (id === 'camille' && pw.toLowerCase() === 'spot') {
+        loginScreen.style.opacity = '0';
+        setTimeout(() => {
+          loginScreen.style.display = 'none';
+          document.getElementById('camille-content').style.display = 'flex';
+          initCamille();
+        }, 500);
+      } 
+      else if (id === 'louis' && pw === 'Laylo#2') {
+        loginScreen.style.opacity = '0';
+        setTimeout(() => {
+          loginScreen.style.display = 'none';
+          document.getElementById('louis-content').style.display = 'flex';
+          initLouis();
+        }, 500);
+      } 
+      else {
+        document.getElementById('error-msg').style.display = 'block';
+      }
+    }
+
+    // INITIALISATION VUE CAMILLE
+    function initCamille() {
       const today = getTodayString();
       const mediaBox = document.getElementById('media-box');
       const captionText = document.getElementById('caption-text');
@@ -187,19 +197,52 @@
         dateBadge.textContent = "Aujourd'hui ✨";
       } else {
         mediaBox.innerHTML = `<div style="padding:40px; color:#888; font-size:3rem;">🔒</div>`;
-        captionText.textContent = "Reviens demain pour la prochaine surprise !";
+        captionText.textContent = "Reviens demain ou le jour J pour la prochaine surprise !";
         dateBadge.textContent = "Patience...";
       }
     }
 
-    // Gestion des boutons animés
-    function toggleCuteBtn(btn) {
-      btn.classList.toggle('active');
-      setTimeout(() => {
-        if(btn.classList.contains('active')) {
-          btn.classList.remove('active');
+    // INITIALISATION VUE ADMIN (LOUIS)
+    function initLouis() {
+      const today = getTodayString();
+      
+      // Calcul des statistiques
+      const total = souvenirs.length;
+      const remaining = souvenirs.filter(s => s.date > today).length;
+      
+      document.getElementById('stat-total').textContent = total;
+      document.getElementById('stat-remaining').textContent = remaining;
+
+      // Génération de la liste
+      const listContainer = document.getElementById('admin-photo-list');
+      listContainer.innerHTML = '';
+
+      souvenirs.forEach(s => {
+        let statusClass = '';
+        let statusText = '';
+
+        if (s.date < today) {
+          statusClass = 'status-past';
+          statusText = '✓ Passée';
+        } else if (s.date === today) {
+          statusClass = 'status-today';
+          statusText = '★ En cours';
+        } else {
+          statusClass = 'status-future';
+          statusText = '⏳ En attente';
         }
-      }, 2500); // Le bouton se remet à zéro après 2.5 secondes
+
+        // Reformater la date pour l'affichage (ex: 2026-09-16 -> 16/09/2026)
+        const dateParts = s.date.split('-');
+        const dateDisplay = `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
+
+        listContainer.innerHTML += `
+          <div class="photo-item">
+            <span><strong>${dateDisplay}</strong> - ${s.photo.replace('photos/', '')}</span>
+            <span class="${statusClass}">${statusText}</span>
+          </div>
+        `;
+      });
     }
   </script>
 </body>
