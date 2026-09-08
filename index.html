@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Notre Année ❤️</title>
+  <!-- Librairie pour les confettis -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <style>
     :root {
@@ -15,180 +16,204 @@
       --muted: #888888;
       --shadow: 0 10px 25px rgba(0, 0, 0, 0.07);
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; user-select: none; }
     
-    body { background-color: var(--bg); color: var(--text); display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 24px 16px; overflow-x: hidden; }
+    body { background-color: var(--bg); color: var(--text); display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 20px 10px; overflow-x: hidden; }
 
-    /* --- ANIMATIONS --- */
+    /* --- ANIMATIONS & OVERLAYS --- */
     @keyframes colorGlow { 0% { color: #e06d75; } 50% { color: #ff8fa3; text-shadow: 0 0 15px rgba(255,143,163,0.8); } 100% { color: #e06d75; } }
     @keyframes heartbeat { 0%, 50%, 100% { transform: scale(1); } 25%, 75% { transform: scale(1.1); } }
     @keyframes blink { 0%, 96%, 98%, 100% { transform: scaleY(1); } 97%, 99% { transform: scaleY(0.1); } }
+    @keyframes popIn { 0% { transform: scale(0.5); opacity: 0; } 80% { transform: scale(1.1); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
 
     .animated-name { display: inline-block; animation: colorGlow 3s infinite; font-weight: bold; }
 
-    /* --- GADGETS --- */
+    #giant-overlay {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none;
+      display: flex; align-items: center; justify-content: center; z-index: 9999;
+      font-size: 8rem; font-weight: bold; color: var(--accent); opacity: 0; transition: opacity 0.5s, transform 0.5s;
+    }
+    .overlay-active { opacity: 1 !important; animation: popIn 0.5s ease forwards; }
+
     #score-bar { position: fixed; top: 10px; right: 10px; background: white; padding: 8px 15px; border-radius: 20px; box-shadow: var(--shadow); font-weight: bold; color: var(--accent); display: none; z-index: 100; }
     #elephant { position: fixed; bottom: -60px; right: 20px; font-size: 50px; z-index: 500; transition: bottom 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
     #elephant.peek { bottom: 10px; }
     #elephant span { display: inline-block; animation: blink 5s infinite; }
-    .giant-heart-btn { font-size: 4rem; background: none; border: none; cursor: pointer; user-select: none; transition: transform 0.1s; margin: 20px 0; display: inline-block; animation: heartbeat 2s infinite; }
-    .giant-heart-btn:active { transform: scale(1.5) !important; animation: none; }
+    
+    .nav-buttons { position: fixed; bottom: 20px; display: flex; gap: 10px; z-index: 100; display: none; }
+    .floating-btn { background: var(--accent); color: white; padding: 12px 20px; border-radius: 30px; box-shadow: var(--shadow); border: none; font-weight: bold; cursor: pointer; }
 
-    /* --- STRUCTURE --- */
+    /* --- STRUCTURE DE BASE --- */
     #login-screen { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; transition: opacity 0.5s ease; }
     .login-box { background: var(--card-bg); padding: 30px; border-radius: 20px; box-shadow: var(--shadow); width: 90%; max-width: 350px; text-align: center; }
     .login-box h2 { color: var(--accent); margin-bottom: 20px; }
     .input-group { margin-bottom: 15px; text-align: left; width: 100%; }
     .input-group label { display: block; font-size: 0.9rem; margin-bottom: 5px; color: var(--muted); }
     .input-group input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; }
+    
     .btn { background: var(--accent); color: white; border: none; padding: 12px 20px; width: 100%; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 10px; transition: transform 0.2s; }
     .btn:active { transform: scale(0.95); }
     .btn-secondary { background: #f0f0f0; color: var(--text); border: 1px solid #ddd; }
     .error-msg { color: red; font-size: 0.8rem; margin-top: 10px; display: none; }
 
-    /* --- VUES --- */
-    #camille-content, #louis-content, #gallery-view { display: none; width: 100%; max-width: 450px; flex-direction: column; align-items: center; padding-top: 20px; padding-bottom: 50px; }
+    #camille-content, #louis-content, #gallery-view, #boutique-view { display: none; width: 100%; max-width: 450px; flex-direction: column; align-items: center; padding-top: 10px; padding-bottom: 150px; }
     header { text-align: center; margin-bottom: 20px; width: 100%; }
     h1 { font-size: 1.6rem; color: var(--text); margin-bottom: 6px; }
-    
     .card { background: var(--card-bg); width: 100%; border-radius: 20px; box-shadow: var(--shadow); overflow: hidden; display: flex; flex-direction: column; align-items: center; padding: 20px; text-align: center; }
-    #media-box { width: 100%; height: 380px; background: #f0f0f0; border-radius: 14px; overflow: hidden; display: none; align-items: center; justify-content: center; position: relative; }
+    
+    /* --- MEDIA & GRATTAGE --- */
+    #media-container { width: 100%; height: 350px; border-radius: 14px; overflow: hidden; display: none; position: relative; background: #f0f0f0; }
+    #media-box { width: 100%; height: 100%; position: absolute; top:0; left:0; }
     #media-box img { width: 100%; height: 100%; object-fit: cover; }
+    #scratch-canvas { position: absolute; top:0; left:0; width:100%; height:100%; z-index: 10; cursor: crosshair; }
     
     #quiz-box { width: 100%; display: flex; flex-direction: column; align-items: center; }
     #question-text { font-size: 1.2rem; margin-bottom: 15px; font-weight: bold; color: var(--text); }
     #quiz-feedback { margin-top: 10px; font-weight: bold; font-size: 0.9rem; min-height: 20px; }
-    .feedback-good { color: #4CAF50; }
-    .feedback-bad { color: #f44336; }
+    .feedback-good { color: #4CAF50; } .feedback-bad { color: #f44336; }
     .caption { margin-top: 18px; font-size: 1.05rem; line-height: 1.4; color: var(--text); font-weight: 500; display: none; }
-    
-    #hint-btn { background: #ffeaa7; color: #d68910; border: none; padding: 8px 15px; border-radius: 20px; font-size: 0.8rem; cursor: pointer; margin-top: 10px; font-weight: bold; display: flex; align-items: center; gap: 5px; }
+
+    /* --- CLAVIER SECRET --- */
+    #custom-keyboard { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-top: 20px; width: 100%; }
+    .key-btn { background: #fff; border: 1px solid #e0e0e0; color: #555; font-size: 1.1rem; font-weight: bold; border-radius: 8px; width: calc(14% - 6px); padding: 12px 0; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    .key-btn:active { background: #f0f0f0; transform: translateY(2px); }
+    .key-btn-large { width: calc(42% - 6px); background: #ffeaa7; border-color: #f1c40f; color: #d35400; }
+
+    /* --- BOUTIQUE --- */
+    .shop-item { background: #fafafa; border: 1px solid #eee; border-radius: 12px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; text-align: left; width: 100%; }
+    .shop-item h4 { color: var(--text); margin-bottom: 4px; font-size: 1rem; }
+    .shop-item p { color: var(--muted); font-size: 0.8rem; }
+    .buy-btn { background: var(--accent); color: white; border: none; padding: 8px 12px; border-radius: 20px; font-weight: bold; cursor: pointer; white-space: nowrap; }
+    .inventory-box { background: rgba(224, 109, 117, 0.1); border-radius: 10px; padding: 15px; width: 100%; margin-top: 20px; text-align: left; }
+
+    /* --- GALERIE --- */
+    .gallery-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 100%; }
+    .gallery-item { aspect-ratio: 1; border-radius: 10px; overflow: hidden; background: #eee; cursor: pointer; position: relative; }
+    .gallery-item img { width: 100%; height: 100%; object-fit: cover; }
+    .gallery-date { position: absolute; bottom: 0; left: 0; width: 100%; background: rgba(0,0,0,0.6); color: white; font-size: 0.7rem; padding: 4px; text-align: center; }
 
     /* --- ADMIN LOUIS --- */
     .admin-header { color: var(--admin-accent); margin-bottom: 20px; }
     .stat-box { background: var(--card-bg); padding: 15px; border-radius: 15px; text-align: left; box-shadow: var(--shadow); width: 100%; margin-bottom: 15px; }
     .stat-box h3 { color: var(--admin-accent); font-size: 1.1rem; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 12px; }
-    
     .timeline-item { display: flex; flex-direction: column; padding: 12px; border-bottom: 1px solid #f0f0f0; background: #fafafa; border-radius: 8px; margin-bottom: 8px; }
     .timeline-header { display: flex; justify-content: space-between; font-weight: bold; font-size: 0.9rem; margin-bottom: 5px; }
-    .timeline-body { font-size: 0.85rem; color: #555; }
     .status-past { color: #4CAF50; } .status-today { color: var(--admin-accent); font-size: 1rem; } .status-future { color: #aaa; }
     .admin-btn { background: var(--admin-accent); color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; margin-top: 5px; }
+    .admin-list { list-style-type: none; font-size: 0.9rem; color: #555; }
+    .admin-list li { margin-bottom: 6px; }
 
-    /* --- GALERIE CAMILLE --- */
-    .gallery-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 100%; }
-    .gallery-item { aspect-ratio: 1; border-radius: 10px; overflow: hidden; background: #eee; cursor: pointer; position: relative; }
-    .gallery-item img { width: 100%; height: 100%; object-fit: cover; }
-    .gallery-date { position: absolute; bottom: 0; left: 0; width: 100%; background: rgba(0,0,0,0.6); color: white; font-size: 0.7rem; padding: 4px; text-align: center; }
-    #nav-btn-gallery { position: fixed; bottom: 20px; background: var(--accent); color: white; padding: 12px 25px; border-radius: 30px; box-shadow: var(--shadow); border: none; font-weight: bold; cursor: pointer; display: none; z-index: 100; }
-
-    /* --- VUE WILIAM (TERMINAL HACKER) --- */
-    #wiliam-content { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: black; color: #00ff00; font-family: 'Courier New', Courier, monospace; font-size: 15px; padding: 20px; overflow-y: hidden; z-index: 9999; text-align: left; line-height: 1.5; }
+    /* --- VUE WILIAM (TERMINAL) --- */
+    #wiliam-content { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: black; color: #00ff00; font-family: 'Courier New', Courier, monospace; font-size: 15px; padding: 20px; overflow-y: hidden; z-index: 9999; text-align: left; }
     .glitch { text-shadow: 2px 0 red, -2px 0 blue; animation: shake 0.5s infinite; }
     @keyframes shake { 0% { transform: translate(1px, 1px) rotate(0deg); } 10% { transform: translate(-1px, -2px) rotate(-1deg); } 20% { transform: translate(-3px, 0px) rotate(1deg); } }
   </style>
 </head>
 <body>
 
-  <!-- SCORE EN HAUT -->
+  <div id="giant-overlay"></div>
   <div id="score-bar">❤️ <span id="heart-count">300</span></div>
-
-  <!-- ÉLÉPHANT ANIMÉ -->
   <div id="elephant"><span>🐘</span></div>
 
-  <!-- BOUTON GALERIE (Flottant) -->
-  <button id="nav-btn-gallery" onclick="toggleGallery()">Voir la Galerie 📸</button>
+  <div class="nav-buttons" id="nav-buttons">
+    <button class="floating-btn" id="btn-mode-gallery" onclick="switchView('gallery')">📸 Galerie</button>
+    <button class="floating-btn" id="btn-mode-shop" onclick="switchView('shop')">🎁 Boutique</button>
+    <button class="floating-btn" id="btn-mode-home" onclick="switchView('home')" style="display:none;">❤️ Retour</button>
+  </div>
 
-  <!-- ÉCRAN DE CONNEXION -->
+  <!-- CONNEXION -->
   <div id="login-screen">
     <div class="login-box">
       <h2>Connexion</h2>
-      <div class="input-group">
-        <label>Identifiant</label>
-        <input type="text" id="userid" placeholder="Qui es-tu ?">
-      </div>
-      <div class="input-group">
-        <label>Mot de passe</label>
-        <input type="password" id="userpw" placeholder="Le mot magique">
-      </div>
+      <div class="input-group"><input type="text" id="userid" placeholder="Identifiant"></div>
+      <div class="input-group"><input type="password" id="userpw" placeholder="Mot de passe"></div>
       <button class="btn" onclick="checkLogin()">Déverrouiller</button>
-      <div id="error-msg" class="error-msg">Identifiant ou mot de passe incorrect.</div>
+      <div id="error-msg" class="error-msg">Erreur d'accès.</div>
     </div>
   </div>
 
-  <!-- VUE CAMILLE (LE CADEAU) -->
+  <!-- VUE CAMILLE (JEU) -->
   <div id="camille-content">
     <header>
       <h1>Pour <span class="animated-name">Camille</span> ❤️</h1>
       <p style="color: var(--muted); font-size: 0.9rem;" id="camille-subtitle">Résous l'énigme pour débloquer ton souvenir</p>
     </header>
 
-    <button class="giant-heart-btn" id="giant-heart" onclick="explodeHeart()">💖</button>
-
     <div class="card" id="main-card">
       <div id="quiz-box">
         <div id="question-text">Chargement...</div>
         <div class="input-group">
-          <input type="text" id="answer-input" placeholder="Ta réponse...">
+          <!-- Le champ est en readonly, elle doit utiliser le clavier secret ! -->
+          <input type="text" id="answer-input" placeholder="Utilise le clavier magique ⬇️" readonly>
         </div>
-        <button class="btn" onclick="checkAnswer()">Valider</button>
-        <button id="hint-btn" onclick="buyHint()">💡 Acheter un indice (20 ❤️)</button>
         <div id="quiz-feedback"></div>
       </div>
 
-      <div id="media-box"></div>
+      <div id="media-container">
+        <div id="media-box"></div>
+        <canvas id="scratch-canvas"></canvas>
+      </div>
       <div class="caption" id="caption-text"></div>
     </div>
+
+    <div id="custom-keyboard"></div>
   </div>
 
-  <!-- VUE GALERIE (CAMILLE) -->
-  <div id="gallery-view">
-    <header>
-      <h1>Nos Souvenirs 📸</h1>
-      <p style="color: var(--muted); font-size: 0.9rem;">Tout ce que tu as déjà débloqué</p>
-    </header>
+  <!-- VUE BOUTIQUE -->
+  <div id="boutique-view">
+    <header><h1>Boutique 🎁</h1><p style="color:var(--muted)">Dépense tes cœurs contre des bons !</p></header>
     <div class="card">
-      <div class="gallery-grid" id="gallery-grid"></div>
+      <div id="shop-items"></div>
+      <div class="inventory-box">
+        <h4>🛒 Ton Inventaire</h4>
+        <ul id="inventory-list" style="margin-top:10px; padding-left:20px; font-size:0.9rem;"></ul>
+      </div>
     </div>
   </div>
 
-  <!-- VUE LOUIS (ADMIN) -->
+  <!-- VUE GALERIE -->
+  <div id="gallery-view">
+    <header><h1>Nos Souvenirs 📸</h1><p style="color:var(--muted)">Ce que tu as déjà débloqué</p></header>
+    <div class="card"><div class="gallery-grid" id="gallery-grid"></div></div>
+  </div>
+
+  <!-- VUE ADMIN LOUIS -->
   <div id="louis-content">
     <h2 class="admin-header">⚙️ Panel Admin</h2>
-    
-    <!-- Zone Test -->
     <div class="stat-box">
       <h3>🚀 Test & Simulation</h3>
-      <div class="input-group">
-        <label>Simuler une date (Pour voir l'affichage le jour J) :</label>
-        <input type="date" id="sim-date">
-      </div>
-      <button class="admin-btn" onclick="applySimulatedDate()">Activer la machine à voyager dans le temps</button>
-      <p style="font-size: 0.8rem; margin-top:10px; color:#666;">Date simulée actuelle : <strong id="current-sim-display">Réelle</strong></p>
+      <input type="date" id="sim-date" style="padding:5px; margin-bottom:5px;">
+      <button class="admin-btn" onclick="applySimulatedDate()">Simuler la date</button>
+      <p style="font-size: 0.8rem; margin-top:5px; color:#666;">Date simulée : <strong id="current-sim-display">Réelle</strong></p>
     </div>
-
-    <!-- Zone Cœurs -->
     <div class="stat-box">
-      <h3>💖 Gestion des Cœurs</h3>
+      <h3>💖 Gestion & Triche</h3>
       <p>Score : <strong id="admin-score-display">0</strong> ❤️</p>
       <button class="admin-btn" style="background:#4CAF50;" onclick="addAdminScore(100)">+ 100 Cœurs</button>
-      <button class="btn btn-secondary" onclick="resetAdminScore()">Tout Réinitialiser (Score & Photos)</button>
+      <button class="admin-btn" style="background:#e06d75;" onclick="clearInventory()">Vider l'inventaire boutique</button>
+      <button class="btn btn-secondary" style="margin-top:10px;" onclick="resetAdminScore()">RESET TOTAL (Jeu à zéro)</button>
     </div>
-
-    <!-- Planning -->
     <div class="stat-box">
-      <h3>📅 Planning des publications</h3>
-      <div id="admin-timeline"></div>
+      <h3>🕵️ Antisèche Easter Eggs</h3>
+      <ul class="admin-list">
+        <li><b>Camille</b> / <b>Louis</b> ➡️ Pluie de cœurs</li>
+        <li><b>Wiliam</b> ➡️ Pluie de têtes de mort 💀</li>
+        <li><b>Leny</b> ➡️ Smileys 😊</li>
+        <li><b>coeur</b> ➡️ Cœur géant à l'écran</li>
+        <li><b>bzouz</b> / <b>bisous</b> ➡️ BZOUZ géant</li>
+        <li><i>Rappel : "Louny" = -300 cœurs (Q12)</i></li>
+      </ul>
     </div>
+    <div class="stat-box"><h3>📅 Planning</h3><div id="admin-timeline"></div></div>
   </div>
 
-  <!-- VUE WILIAM (BLAGUE MATRIX) -->
+  <!-- VUE WILIAM -->
   <div id="wiliam-content"></div>
 
   <script>
-    /* =========================================================
+    /* ==========================================
        BASE DE DONNÉES
-       ========================================================= */
+       ========================================== */
     const souvenirs = [
       { id: 1, date: "2026-09-16", photo: "photos/souvenir1.jpg", texte: "Le tout premier jour ! ❤️", question: "Ma couleur préférée ?", reponse: "rouge" },
       { id: 2, date: "2026-09-17", photo: "photos/souvenir2.jpg", texte: "Souvenir 2", question: "Mon animal totem ?", reponse: "ours brun" },
@@ -209,95 +234,145 @@
       { id: 17, date: "2026-10-02", photo: "photos/souvenir17.jpg", texte: "Souvenir 17", question: "Mon joueur de foot idole ?", reponse: "Thibaut Courtois" }
     ];
 
+    const boutiqueItems = [
+      { id: 'b1', nom: "Une dizaine de bzouz 😘", prix: 100 },
+      { id: 'b2', nom: "Massage de 10 min 💆‍♀️", prix: 300 },
+      { id: 'b3', nom: "Câlin infini 🤗", prix: 400 },
+      { id: 'b4', nom: "Aprem à la carte 👑", prix: 800 }
+    ];
+
     let currentScore = parseInt(localStorage.getItem('coeurs')) || 300;
     let unlockedDays = JSON.parse(localStorage.getItem('unlockedDays')) || [];
+    let inventory = JSON.parse(localStorage.getItem('inventory')) || [];
     let todaySouvenir = null;
     let simulatedDate = sessionStorage.getItem('simulatedDate') || null;
+    let easterEggBuffer = ""; // Stocke ce qu'elle tape
+    let isScratching = false;
 
-    // --- UTILITAIRES ---
+    // Utilitaires
     function updateScoreDisplay() {
       localStorage.setItem('coeurs', currentScore);
       document.getElementById('heart-count').textContent = currentScore;
-      document.getElementById('admin-score-display').textContent = currentScore;
+      if(document.getElementById('admin-score-display')) document.getElementById('admin-score-display').textContent = currentScore;
     }
-
     function getTodayString() {
       if (simulatedDate) return simulatedDate;
       const now = new Date();
       return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     }
+    function cleanString(str) { return str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, ""); }
 
-    function cleanString(str) {
-      return str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
-    }
-
-    // --- CONNEXION ---
+    // --- INITIALISATION & CONNEXION ---
     function checkLogin() {
       const id = document.getElementById('userid').value.trim().toLowerCase();
       const pw = document.getElementById('userpw').value.trim();
-      const loginScreen = document.getElementById('login-screen');
+      const login = document.getElementById('login-screen');
 
       if (id === 'camille' && pw.toLowerCase() === 'spot') {
-        loginScreen.style.opacity = '0';
+        login.style.opacity = '0';
         setTimeout(() => {
-          loginScreen.style.display = 'none';
+          login.style.display = 'none';
           document.getElementById('camille-content').style.display = 'flex';
           document.getElementById('score-bar').style.display = 'block';
-          if (unlockedDays.length > 0) document.getElementById('nav-btn-gallery').style.display = 'block';
+          if (unlockedDays.length > 0) document.getElementById('nav-buttons').style.display = 'flex';
           updateScoreDisplay();
+          initKeyboard();
           initCamille();
           randomElephant();
         }, 500);
       } 
       else if (id === 'louis' && pw === 'Laylo#2') {
-        loginScreen.style.opacity = '0';
+        login.style.opacity = '0';
         setTimeout(() => {
-          loginScreen.style.display = 'none';
+          login.style.display = 'none';
           document.getElementById('louis-content').style.display = 'flex';
           updateScoreDisplay();
           initAdminTimeline();
         }, 500);
       }
       else if (id === 'wiliam' && pw.toLowerCase() === 'daube') {
-        loginScreen.style.opacity = '0';
-        setTimeout(() => {
-          loginScreen.style.display = 'none';
-          document.getElementById('wiliam-content').style.display = 'block';
-          startWiliamPrank();
-        }, 500);
+        login.style.opacity = '0';
+        setTimeout(() => { login.style.display = 'none'; document.getElementById('wiliam-content').style.display = 'block'; startWiliamPrank(); }, 500);
       }
-      else {
-        document.getElementById('error-msg').style.display = 'block';
-      }
+      else { document.getElementById('error-msg').style.display = 'block'; }
     }
 
-    // --- VUE CAMILLE ---
+    // --- LE JEU (CAMILLE) ---
     function initCamille() {
       const today = getTodayString();
       todaySouvenir = souvenirs.find(s => s.date === today);
 
       if (!todaySouvenir) {
-        // Est-ce avant le 16 septembre ?
         if (today < souvenirs[0].date) {
-            document.getElementById('quiz-box').innerHTML = `
-              <div style="font-size:4rem;">⏳</div>
-              <div style="margin-top:10px; font-weight:bold; color:var(--accent);">L'aventure n'a pas encore commencé !</div>
-              <p style="margin-top:10px; font-size:0.9rem; color:var(--muted);">Le tout premier souvenir t'attendra ici le 16 septembre...</p>
-            `;
+            document.getElementById('quiz-box').innerHTML = `<div style="font-size:4rem;">⏳</div><div style="margin-top:10px; font-weight:bold; color:var(--accent);">L'aventure commence le 16 !</div>`;
         } else {
-            document.getElementById('quiz-box').innerHTML = `<div style="padding:20px; font-size:3rem;">🔒</div><div style="margin-top:10px;">Reviens demain pour la suite !</div>`;
+            document.getElementById('quiz-box').innerHTML = `<div style="padding:20px; font-size:3rem;">🔒</div><div style="margin-top:10px;">Reviens demain !</div>`;
         }
+        document.getElementById('custom-keyboard').style.display = 'none';
         return;
       }
 
       if (unlockedDays.includes(todaySouvenir.id)) {
-        showPhoto();
+        showPhoto(false); // false = pas de carte à gratter car déjà fait
       } else {
         document.getElementById('question-text').textContent = todaySouvenir.question;
         document.getElementById('answer-input').value = "";
-        document.getElementById('quiz-feedback').textContent = "";
-        document.getElementById('hint-btn').style.display = 'flex';
       }
+    }
+
+    // --- CLAVIER & EASTER EGGS ---
+    function initKeyboard() {
+      const kb = document.getElementById('custom-keyboard');
+      const letters = "A,Z,E,R,T,Y,U,I,O,P,Q,S,D,F,G,H,J,K,L,M,W,X,C,V,B,N".split(','); // Légèrement désorganisé ou Azerty
+      kb.innerHTML = '';
+      letters.forEach(l => {
+        const btn = document.createElement('button');
+        btn.className = 'key-btn'; btn.textContent = l;
+        btn.onclick = () => typeLetter(l);
+        kb.appendChild(btn);
+      });
+      // Boutons spéciaux
+      const btnDel = document.createElement('button'); btnDel.className = 'key-btn key-btn-large'; btnDel.textContent = 'EFFACER'; btnDel.onclick = () => deleteLetter(); kb.appendChild(btnDel);
+      const btnVal = document.createElement('button'); btnVal.className = 'key-btn key-btn-large'; btnVal.textContent = 'VALIDER'; btnVal.onclick = () => checkAnswer(); kb.appendChild(btnVal);
+      const btnHint = document.createElement('button'); btnHint.className = 'key-btn key-btn-large'; btnHint.style.width="100%"; btnHint.textContent = '💡 INDICE (20 ❤️)'; btnHint.onclick = () => buyHint(); kb.appendChild(btnHint);
+    }
+
+    function typeLetter(l) {
+      const input = document.getElementById('answer-input');
+      input.value += l;
+      easterEggBuffer += l.toLowerCase();
+      if(easterEggBuffer.length > 20) easterEggBuffer = easterEggBuffer.slice(-20);
+      checkEasterEggs();
+    }
+    function deleteLetter() {
+      const input = document.getElementById('answer-input');
+      input.value = input.value.slice(0, -1);
+    }
+
+    function checkEasterEggs() {
+      const word = easterEggBuffer;
+      const emojiSkull = confetti.shapeFromText({ text: '💀', scalar: 2 });
+      const emojiSmile = confetti.shapeFromText({ text: '😊', scalar: 2 });
+      
+      if(word.includes("camille") || word.includes("louis")) {
+        confetti({ shapes: ['heart'], colors: ['#ff8fa3', '#e06d75'] });
+        easterEggBuffer = "";
+      } else if (word.includes("wiliam")) {
+        confetti({ shapes: [emojiSkull], scalar: 2 }); easterEggBuffer = "";
+      } else if (word.includes("leny")) {
+        confetti({ shapes: [emojiSmile], scalar: 2 }); easterEggBuffer = "";
+      } else if (word.includes("coeur")) {
+        triggerOverlay("❤️"); easterEggBuffer = "";
+      } else if (word.includes("bzouz") || word.includes("bisous")) {
+        triggerOverlay("BZOUZ!"); easterEggBuffer = "";
+      }
+    }
+
+    function triggerOverlay(text) {
+      const overlay = document.getElementById('giant-overlay');
+      overlay.textContent = text;
+      overlay.classList.add('overlay-active');
+      setTimeout(() => overlay.classList.remove('overlay-active'), 1000);
     }
 
     function checkAnswer() {
@@ -307,88 +382,172 @@
       const expectedClean = cleanString(todaySouvenir.reponse);
 
       if (todaySouvenir.id === 12 && userClean === cleanString("Louny")) {
-        currentScore -= 300;
-        updateScoreDisplay();
-        feedback.className = "feedback-bad";
-        feedback.textContent = "Aïe... -300 cœurs pour le mot interdit 💔 !";
+        currentScore -= 300; updateScoreDisplay();
+        feedback.className = "feedback-bad"; feedback.textContent = "-300 cœurs (Mot interdit 💔)";
         return;
       }
-
       if (userClean === expectedClean) {
         currentScore += 75;
         unlockedDays.push(todaySouvenir.id);
         localStorage.setItem('unlockedDays', JSON.stringify(unlockedDays));
         updateScoreDisplay();
-        confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
-        document.getElementById('nav-btn-gallery').style.display = 'block';
-        showPhoto();
+        document.getElementById('nav-buttons').style.display = 'flex';
+        showPhoto(true); // true = lancer la carte à gratter
       } else {
-        currentScore -= 50;
-        updateScoreDisplay();
-        feedback.className = "feedback-bad";
-        feedback.textContent = "Oops ! Mauvaise réponse. -50 cœurs 💔";
+        currentScore -= 50; updateScoreDisplay();
+        feedback.className = "feedback-bad"; feedback.textContent = "Faux ! -50 ❤️";
       }
     }
 
     function buyHint() {
-      if (currentScore < 20) {
-        alert("Tu n'as pas assez de cœurs !");
-        return;
-      }
-      currentScore -= 20;
-      updateScoreDisplay();
-      
+      if (currentScore < 20) { alert("Pas assez de cœurs !"); return; }
+      currentScore -= 20; updateScoreDisplay();
       const rep = todaySouvenir.reponse;
-      const premiereLettre = rep.charAt(0).toUpperCase();
-      const longueur = rep.replace(/ /g, '').length;
-      
       document.getElementById('quiz-feedback').className = "feedback-good";
-      document.getElementById('quiz-feedback').innerHTML = `💡 Indice : Ça commence par <b>${premiereLettre}</b> et contient <b>${longueur}</b> lettres.`;
-      document.getElementById('hint-btn').style.display = 'none'; // Un seul indice par question
+      document.getElementById('quiz-feedback').innerHTML = `💡 Commence par <b>${rep.charAt(0).toUpperCase()}</b> (${rep.replace(/ /g, '').length} lettres).`;
     }
 
-    function showPhoto() {
+    // --- CARTE À GRATTER & AFFICHAGE ---
+    function showPhoto(needsScratch) {
       document.getElementById('quiz-box').style.display = 'none';
+      document.getElementById('custom-keyboard').style.display = 'none';
+      
+      const container = document.getElementById('media-container');
       const mediaBox = document.getElementById('media-box');
       const captionText = document.getElementById('caption-text');
       
-      mediaBox.style.display = 'flex';
-      captionText.style.display = 'block';
+      container.style.display = 'block';
       mediaBox.innerHTML = `<img src="${todaySouvenir.photo}" alt="Souvenir">`;
-      captionText.innerHTML = `${todaySouvenir.texte}<br><br><span style="color:var(--accent); font-size:0.8rem;">(Réponse : ${todaySouvenir.reponse})</span>`;
-    }
+      captionText.innerHTML = `${todaySouvenir.texte}`;
 
-    // --- GALERIE ---
-    let galleryOpen = false;
-    function toggleGallery() {
-      galleryOpen = !galleryOpen;
-      const camilleContent = document.getElementById('camille-content');
-      const galleryView = document.getElementById('gallery-view');
-      const btn = document.getElementById('nav-btn-gallery');
-
-      if (galleryOpen) {
-        camilleContent.style.display = 'none';
-        galleryView.style.display = 'flex';
-        btn.innerHTML = "Retour au Jour J ❤️";
-        btn.style.background = "#fff";
-        btn.style.color = "var(--accent)";
-        loadGallery();
+      if(needsScratch) {
+        initScratchCard();
       } else {
-        camilleContent.style.display = 'flex';
-        galleryView.style.display = 'none';
-        btn.innerHTML = "Voir la Galerie 📸";
-        btn.style.background = "var(--accent)";
-        btn.style.color = "#fff";
+        document.getElementById('scratch-canvas').style.display = 'none';
+        captionText.style.display = 'block';
       }
     }
 
-    function loadGallery() {
+    function initScratchCard() {
+      const canvas = document.getElementById('scratch-canvas');
+      const container = document.getElementById('media-container');
+      canvas.style.display = 'block';
+      canvas.width = container.offsetWidth;
+      canvas.height = container.offsetHeight;
+      const ctx = canvas.getContext('2d');
+      
+      // Fond à gratter
+      ctx.fillStyle = '#b2bec3';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.font = 'bold 24px sans-serif';
+      ctx.fillStyle = '#636e72';
+      ctx.textAlign = 'center';
+      ctx.fillText('Gratte ici ! ☝️', canvas.width/2, canvas.height/2);
+
+      let isDrawing = false;
+      function scratch(x, y) {
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.beginPath();
+        ctx.arc(x, y, 25, 0, 2 * Math.PI);
+        ctx.fill();
+        checkScratchCompletion();
+      }
+
+      function getCoords(e) {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return { x: clientX - rect.left, y: clientY - rect.top };
+      }
+
+      canvas.addEventListener('mousedown', (e) => { isDrawing = true; const pos = getCoords(e); scratch(pos.x, pos.y); });
+      canvas.addEventListener('mousemove', (e) => { if(isDrawing){ const pos = getCoords(e); scratch(pos.x, pos.y); }});
+      canvas.addEventListener('mouseup', () => isDrawing = false);
+      canvas.addEventListener('touchstart', (e) => { isDrawing = true; const pos = getCoords(e); scratch(pos.x, pos.y); e.preventDefault(); }, {passive:false});
+      canvas.addEventListener('touchmove', (e) => { if(isDrawing){ const pos = getCoords(e); scratch(pos.x, pos.y); } e.preventDefault(); }, {passive:false});
+      canvas.addEventListener('touchend', () => isDrawing = false);
+
+      function checkScratchCompletion() {
+        if(isScratching) return; // évite de spammer
+        const pixels = ctx.getImageData(0,0,canvas.width,canvas.height).data;
+        let transparent = 0;
+        for(let i = 3; i < pixels.length; i+=4) { if(pixels[i] === 0) transparent++; }
+        if(transparent > (pixels.length/4) * 0.4) {
+          isScratching = true;
+          canvas.style.transition = 'opacity 0.5s';
+          canvas.style.opacity = '0';
+          setTimeout(() => {
+            canvas.style.display = 'none';
+            document.getElementById('caption-text').style.display = 'block';
+            confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+          }, 500);
+        }
+      }
+    }
+
+    // --- NAVIGATION VUES CAMILLE ---
+    function switchView(view) {
+      document.getElementById('camille-content').style.display = 'none';
+      document.getElementById('boutique-view').style.display = 'none';
+      document.getElementById('gallery-view').style.display = 'none';
+      document.getElementById('btn-mode-home').style.display = 'block';
+      document.getElementById('btn-mode-shop').style.display = 'block';
+      document.getElementById('btn-mode-gallery').style.display = 'block';
+
+      if(view === 'home') {
+        document.getElementById('camille-content').style.display = 'flex';
+        document.getElementById('btn-mode-home').style.display = 'none';
+      } else if (view === 'shop') {
+        document.getElementById('boutique-view').style.display = 'flex';
+        document.getElementById('btn-mode-shop').style.display = 'none';
+        renderShop();
+      } else if (view === 'gallery') {
+        document.getElementById('gallery-view').style.display = 'flex';
+        document.getElementById('btn-mode-gallery').style.display = 'none';
+        renderGallery();
+      }
+    }
+
+    // --- BOUTIQUE ---
+    function renderShop() {
+      const container = document.getElementById('shop-items');
+      container.innerHTML = '';
+      boutiqueItems.forEach(item => {
+        container.innerHTML += `
+          <div class="shop-item">
+            <div><h4>${item.nom}</h4><p>Prix : ${item.prix} ❤️</p></div>
+            <button class="buy-btn" onclick="buyItem('${item.id}')">Acheter</button>
+          </div>
+        `;
+      });
+      renderInventory();
+    }
+    function buyItem(id) {
+      const item = boutiqueItems.find(i => i.id === id);
+      if(currentScore >= item.prix) {
+        currentScore -= item.prix;
+        inventory.push(item.nom);
+        localStorage.setItem('inventory', JSON.stringify(inventory));
+        updateScoreDisplay();
+        renderInventory();
+        confetti({ shapes: ['star'], colors: ['#f1c40f'] });
+        alert(`Félicitations, tu as acheté : ${item.nom} !`);
+      } else {
+        alert("Tu n'as pas assez de cœurs pour ça !");
+      }
+    }
+    function renderInventory() {
+      const list = document.getElementById('inventory-list');
+      list.innerHTML = '';
+      if(inventory.length === 0) { list.innerHTML = '<i>Rien pour le moment...</i>'; return; }
+      inventory.forEach(item => { list.innerHTML += `<li>${item}</li>`; });
+    }
+
+    // --- GALERIE ---
+    function renderGallery() {
       const grid = document.getElementById('gallery-grid');
       grid.innerHTML = "";
-      
-      // Récupérer les souvenirs débloqués
       const unlocked = souvenirs.filter(s => unlockedDays.includes(s.id));
-      
       unlocked.reverse().forEach(item => {
         const dateParts = item.date.split('-');
         grid.innerHTML += `
@@ -400,18 +559,12 @@
       });
     }
 
-    // --- ANIMATIONS GLOBALES ---
+    // --- ANIMATIONS ---
     function randomElephant() {
       setInterval(() => {
         const el = document.getElementById('elephant');
-        if (Math.random() > 0.7) {
-          el.classList.add('peek');
-          setTimeout(() => el.classList.remove('peek'), 4000);
-        }
+        if (Math.random() > 0.7) { el.classList.add('peek'); setTimeout(() => el.classList.remove('peek'), 4000); }
       }, 10000);
-    }
-    function explodeHeart() {
-      confetti({ particleCount: 80, spread: 100, startVelocity: 30, colors: ['#ff8fa3', '#e06d75', '#ffffff'], origin: { y: 0.3 } });
     }
 
     // --- ADMIN (LOUIS) ---
@@ -419,10 +572,7 @@
       const today = getTodayString();
       const timeline = document.getElementById('admin-timeline');
       timeline.innerHTML = '';
-      
-      if (simulatedDate) {
-        document.getElementById('current-sim-display').textContent = simulatedDate;
-      }
+      if (simulatedDate) document.getElementById('current-sim-display').textContent = simulatedDate;
 
       souvenirs.forEach(s => {
         let statusClass, statusText;
@@ -432,79 +582,51 @@
 
         const unlockedText = unlockedDays.includes(s.id) ? " (Débloqué)" : "";
         const dateParts = s.date.split('-');
-        
         timeline.innerHTML += `
           <div class="timeline-item">
-            <div class="timeline-header">
-              <span>Jour ${s.id} - ${dateParts[2]}/${dateParts[1]}/${dateParts[0]}</span>
-              <span class="${statusClass}">${statusText}${unlockedText}</span>
-            </div>
-            <div class="timeline-body">
-              <b>Q:</b> ${s.question}<br>
-              <b>R:</b> <span style="color:var(--admin-accent)">${s.reponse}</span><br>
-              <i>Fichier : ${s.photo}</i>
-            </div>
+            <div class="timeline-header"><span>Jour ${s.id} - ${dateParts[2]}/${dateParts[1]}/${dateParts[0]}</span><span class="${statusClass}">${statusText}${unlockedText}</span></div>
+            <div style="font-size:0.85rem; color:#555;"><b>R:</b> <span style="color:var(--admin-accent)">${s.reponse}</span></div>
           </div>
         `;
       });
     }
-
     function applySimulatedDate() {
       const input = document.getElementById('sim-date').value;
-      if (input) {
-        sessionStorage.setItem('simulatedDate', input);
-        simulatedDate = input;
-        initAdminTimeline();
-        alert("Machine à voyager dans le temps activée ! ⏳ Date simulée : " + input);
-      } else {
-        sessionStorage.removeItem('simulatedDate');
-        simulatedDate = null;
-        initAdminTimeline();
-      }
+      if (input) { sessionStorage.setItem('simulatedDate', input); simulatedDate = input; initAdminTimeline(); alert("Date simulée : " + input); }
+      else { sessionStorage.removeItem('simulatedDate'); simulatedDate = null; initAdminTimeline(); }
     }
-
     function addAdminScore(amount) { currentScore += amount; updateScoreDisplay(); }
+    function clearInventory() { inventory = []; localStorage.removeItem('inventory'); alert("Inventaire vidé !"); }
     function resetAdminScore() {
-      if(confirm("Sûr de vouloir tout effacer et remettre à zéro ?")) {
-        currentScore = 300;
-        unlockedDays = [];
-        localStorage.removeItem('unlockedDays');
-        updateScoreDisplay();
-        initAdminTimeline();
+      if(confirm("Sûr de vouloir tout effacer ?")) {
+        currentScore = 300; unlockedDays = []; inventory = [];
+        localStorage.removeItem('unlockedDays'); localStorage.removeItem('inventory');
+        updateScoreDisplay(); initAdminTimeline(); alert("Jeu réinitialisé.");
       }
     }
 
-    // --- LE PIRATAGE DE WILIAM ---
+    // --- VUE WILIAM ---
     function startWiliamPrank() {
       const container = document.getElementById('wiliam-content');
       const fakeErrors = [
         "INITIALISATION DE LA PROCEDURE...",
         "ACCES NON AUTORISE DETECTE",
-        "Analyse de l'utilisateur en cours...",
         "UTILISATEUR IDENTIFIE : Wiliam",
-        "Recherche de données compromettantes...",
         "CRITICAL ERROR : Taux de Daube supérieur à 400%",
         "Alerte : Fichiers Minecraft corrompus",
         "TENTATIVE DE SAUVETAGE DES MAPS...",
         "ECHEC.",
         "Suppression des sauvegardes Minecraft en cours...",
         "Formatage du disque C:/",
-        "DESTRUCTION EMINENTE",
         "<span class='glitch'>SYSTEME HACKE PAR LOUIS.EXE</span>"
       ];
-
       let i = 0;
       const interval = setInterval(() => {
         if (i < fakeErrors.length) {
-          const msg = document.createElement('div');
-          msg.innerHTML = `> ${fakeErrors[i]}`;
-          container.appendChild(msg);
-          container.scrollTop = container.scrollHeight;
-          i++;
-        } else {
-          clearInterval(interval);
-        }
-      }, 800); // Apparaît doucement pour plus de stress
+          const msg = document.createElement('div'); msg.innerHTML = `> ${fakeErrors[i]}`;
+          container.appendChild(msg); container.scrollTop = container.scrollHeight; i++;
+        } else { clearInterval(interval); }
+      }, 800);
     }
   </script>
 </body>
