@@ -28,11 +28,7 @@
 
     .animated-name { display: inline-block; animation: colorGlow 3s infinite; font-weight: bold; }
 
-    #giant-overlay {
-      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none;
-      display: flex; align-items: center; justify-content: center; z-index: 9999;
-      font-size: 8rem; font-weight: bold; color: var(--accent); opacity: 0; transition: opacity 0.5s, transform 0.5s;
-    }
+    #giant-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; display: flex; align-items: center; justify-content: center; z-index: 9999; font-size: 8rem; font-weight: bold; color: var(--accent); opacity: 0; transition: opacity 0.5s, transform 0.5s; }
     .overlay-active { opacity: 1 !important; animation: popIn 0.5s ease forwards; }
 
     #score-bar { position: fixed; top: 10px; right: 10px; background: white; padding: 8px 15px; border-radius: 20px; box-shadow: var(--shadow); font-weight: bold; color: var(--accent); display: none; z-index: 100; }
@@ -86,11 +82,18 @@
     .buy-btn { background: var(--accent); color: white; border: none; padding: 8px 12px; border-radius: 20px; font-weight: bold; cursor: pointer; white-space: nowrap; }
     .inventory-box { background: rgba(224, 109, 117, 0.1); border-radius: 10px; padding: 15px; width: 100%; margin-top: 20px; text-align: left; }
 
-    /* --- GALERIE --- */
+    /* --- GALERIE & NOUVEAU MODAL (CADRE PHOTO) --- */
     .gallery-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 100%; }
     .gallery-item { aspect-ratio: 1; border-radius: 10px; overflow: hidden; background: #eee; cursor: pointer; position: relative; }
     .gallery-item img { width: 100%; height: 100%; object-fit: cover; }
     .gallery-date { position: absolute; bottom: 0; left: 0; width: 100%; background: rgba(0,0,0,0.6); color: white; font-size: 0.7rem; padding: 4px; text-align: center; }
+    
+    /* Le beau cadre photo qui remplace l'alerte ! */
+    #gallery-modal { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); z-index: 10000; flex-direction: column; align-items: center; justify-content: center; padding: 20px; opacity: 0; transition: opacity 0.3s ease; }
+    #gallery-modal.active { opacity: 1; }
+    #modal-img { max-width: 100%; max-height: 60vh; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); object-fit: contain; }
+    #modal-text { color: white; font-size: 1.2rem; margin-top: 20px; text-align: center; font-weight: 500; }
+    #close-modal-btn { background: var(--accent); color: white; border: none; padding: 10px 25px; border-radius: 20px; margin-top: 30px; font-weight: bold; cursor: pointer; font-size: 1rem; }
 
     /* --- ADMIN LOUIS --- */
     .admin-header { color: var(--admin-accent); margin-bottom: 20px; }
@@ -103,13 +106,20 @@
     .admin-list { list-style-type: none; font-size: 0.9rem; color: #555; }
     .admin-list li { margin-bottom: 6px; }
 
-    /* --- VUE WILIAM (TERMINAL) --- */
+    /* --- VUE WILIAM --- */
     #wiliam-content { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: black; color: #00ff00; font-family: 'Courier New', Courier, monospace; font-size: 15px; padding: 20px; overflow-y: hidden; z-index: 9999; text-align: left; }
     .glitch { text-shadow: 2px 0 red, -2px 0 blue; animation: shake 0.5s infinite; }
     @keyframes shake { 0% { transform: translate(1px, 1px) rotate(0deg); } 10% { transform: translate(-1px, -2px) rotate(-1deg); } 20% { transform: translate(-3px, 0px) rotate(1deg); } }
   </style>
 </head>
 <body>
+
+  <!-- MODAL POUR LA GALERIE (Le beau cadre photo) -->
+  <div id="gallery-modal">
+    <img id="modal-img" src="" alt="Souvenir en grand">
+    <div id="modal-text"></div>
+    <button id="close-modal-btn" onclick="closeModal()">Fermer ❤️</button>
+  </div>
 
   <div id="giant-overlay"></div>
   <div id="score-bar">❤️ <span id="heart-count">300</span></div>
@@ -139,11 +149,12 @@
       <p style="color: var(--muted); font-size: 0.9rem;" id="camille-subtitle">Résous l'énigme pour débloquer ton souvenir</p>
     </header>
 
+    <button class="giant-heart-btn" id="giant-heart" onclick="explodeHeart()">💖</button>
+
     <div class="card" id="main-card">
       <div id="quiz-box">
         <div id="question-text">Chargement...</div>
         <div class="input-group">
-          <!-- Le champ est en readonly, elle doit utiliser le clavier secret ! -->
           <input type="text" id="answer-input" placeholder="Utilise le clavier magique ⬇️" readonly>
         </div>
         <div id="quiz-feedback"></div>
@@ -246,7 +257,7 @@
     let inventory = JSON.parse(localStorage.getItem('inventory')) || [];
     let todaySouvenir = null;
     let simulatedDate = sessionStorage.getItem('simulatedDate') || null;
-    let easterEggBuffer = ""; // Stocke ce qu'elle tape
+    let easterEggBuffer = "";
     let isScratching = false;
 
     // Utilitaires
@@ -313,7 +324,7 @@
       }
 
       if (unlockedDays.includes(todaySouvenir.id)) {
-        showPhoto(false); // false = pas de carte à gratter car déjà fait
+        showPhoto(false);
       } else {
         document.getElementById('question-text').textContent = todaySouvenir.question;
         document.getElementById('answer-input').value = "";
@@ -323,7 +334,7 @@
     // --- CLAVIER & EASTER EGGS ---
     function initKeyboard() {
       const kb = document.getElementById('custom-keyboard');
-      const letters = "A,Z,E,R,T,Y,U,I,O,P,Q,S,D,F,G,H,J,K,L,M,W,X,C,V,B,N".split(','); // Légèrement désorganisé ou Azerty
+      const letters = "A,Z,E,R,T,Y,U,I,O,P,Q,S,D,F,G,H,J,K,L,M,W,X,C,V,B,N".split(',');
       kb.innerHTML = '';
       letters.forEach(l => {
         const btn = document.createElement('button');
@@ -331,7 +342,6 @@
         btn.onclick = () => typeLetter(l);
         kb.appendChild(btn);
       });
-      // Boutons spéciaux
       const btnDel = document.createElement('button'); btnDel.className = 'key-btn key-btn-large'; btnDel.textContent = 'EFFACER'; btnDel.onclick = () => deleteLetter(); kb.appendChild(btnDel);
       const btnVal = document.createElement('button'); btnVal.className = 'key-btn key-btn-large'; btnVal.textContent = 'VALIDER'; btnVal.onclick = () => checkAnswer(); kb.appendChild(btnVal);
       const btnHint = document.createElement('button'); btnHint.className = 'key-btn key-btn-large'; btnHint.style.width="100%"; btnHint.textContent = '💡 INDICE (20 ❤️)'; btnHint.onclick = () => buyHint(); kb.appendChild(btnHint);
@@ -355,8 +365,7 @@
       const emojiSmile = confetti.shapeFromText({ text: '😊', scalar: 2 });
       
       if(word.includes("camille") || word.includes("louis")) {
-        confetti({ shapes: ['heart'], colors: ['#ff8fa3', '#e06d75'] });
-        easterEggBuffer = "";
+        confetti({ shapes: ['heart'], colors: ['#ff8fa3', '#e06d75'] }); easterEggBuffer = "";
       } else if (word.includes("wiliam")) {
         confetti({ shapes: [emojiSkull], scalar: 2 }); easterEggBuffer = "";
       } else if (word.includes("leny")) {
@@ -392,7 +401,7 @@
         localStorage.setItem('unlockedDays', JSON.stringify(unlockedDays));
         updateScoreDisplay();
         document.getElementById('nav-buttons').style.display = 'flex';
-        showPhoto(true); // true = lancer la carte à gratter
+        showPhoto(true);
       } else {
         currentScore -= 50; updateScoreDisplay();
         feedback.className = "feedback-bad"; feedback.textContent = "Faux ! -50 ❤️";
@@ -417,7 +426,7 @@
       const captionText = document.getElementById('caption-text');
       
       container.style.display = 'block';
-      mediaBox.innerHTML = `<img src="${todaySouvenir.photo}" alt="Souvenir">`;
+      mediaBox.innerHTML = `<img src="${todaySouvenir.photo}" alt="Souvenir" onerror="this.src='https://via.placeholder.com/400?text=Photo+introuvable'">`;
       captionText.innerHTML = `${todaySouvenir.texte}`;
 
       if(needsScratch) {
@@ -436,7 +445,6 @@
       canvas.height = container.offsetHeight;
       const ctx = canvas.getContext('2d');
       
-      // Fond à gratter
       ctx.fillStyle = '#b2bec3';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.font = 'bold 24px sans-serif';
@@ -468,7 +476,7 @@
       canvas.addEventListener('touchend', () => isDrawing = false);
 
       function checkScratchCompletion() {
-        if(isScratching) return; // évite de spammer
+        if(isScratching) return;
         const pixels = ctx.getImageData(0,0,canvas.width,canvas.height).data;
         let transparent = 0;
         for(let i = 3; i < pixels.length; i+=4) { if(pixels[i] === 0) transparent++; }
@@ -543,15 +551,18 @@
       inventory.forEach(item => { list.innerHTML += `<li>${item}</li>`; });
     }
 
-    // --- GALERIE ---
+    // --- GALERIE ET NOUVEAU POPUP ---
     function renderGallery() {
       const grid = document.getElementById('gallery-grid');
       grid.innerHTML = "";
       const unlocked = souvenirs.filter(s => unlockedDays.includes(s.id));
+      
       unlocked.reverse().forEach(item => {
         const dateParts = item.date.split('-');
+        
+        // On remplace le "alert" moche par "openModal"
         grid.innerHTML += `
-          <div class="gallery-item" onclick="alert('${item.texte.replace(/'/g, "\\'")}')">
+          <div class="gallery-item" onclick="openModal('${item.photo}', '${item.texte.replace(/'/g, "\\'")}')">
             <img src="${item.photo}" onerror="this.src='https://via.placeholder.com/150?text=Photo'">
             <div class="gallery-date">${dateParts[2]}/${dateParts[1]}</div>
           </div>
@@ -559,12 +570,43 @@
       });
     }
 
-    // --- ANIMATIONS ---
+    // Fonctions du nouveau Modal d'affichage
+    function openModal(photoUrl, texte) {
+      const modal = document.getElementById('gallery-modal');
+      document.getElementById('modal-img').src = photoUrl;
+      
+      // Si l'image bugue à cause du nom (ex: souvenir2), on montre l'erreur sans crasher
+      document.getElementById('modal-img').onerror = function() {
+        this.src = 'https://via.placeholder.com/400?text=Photo+introuvable';
+      };
+
+      document.getElementById('modal-text').innerHTML = texte;
+      modal.style.display = 'flex';
+      
+      // Petit délai pour l'effet fondu
+      setTimeout(() => {
+        modal.classList.add('active');
+      }, 10);
+    }
+
+    function closeModal() {
+      const modal = document.getElementById('gallery-modal');
+      modal.classList.remove('active');
+      
+      setTimeout(() => {
+        modal.style.display = 'none';
+      }, 300);
+    }
+
+    // --- ANIMATIONS GLOBALES ---
     function randomElephant() {
       setInterval(() => {
         const el = document.getElementById('elephant');
         if (Math.random() > 0.7) { el.classList.add('peek'); setTimeout(() => el.classList.remove('peek'), 4000); }
       }, 10000);
+    }
+    function explodeHeart() {
+      confetti({ particleCount: 80, spread: 100, startVelocity: 30, colors: ['#ff8fa3', '#e06d75', '#ffffff'], origin: { y: 0.3 } });
     }
 
     // --- ADMIN (LOUIS) ---
